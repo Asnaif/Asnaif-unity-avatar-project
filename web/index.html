@@ -1,0 +1,707 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <!--
+    If you are serving your web app in a path other than the root, change the
+    href value below to reflect the base path you are serving from.
+
+    The path provided below has to start and end with a slash "/" in order for
+    it to work correctly.
+
+    For more details:
+    * https://developer.mozilla.org/en-US/docs/Web/HTML/Element/base
+
+    This is a placeholder for base href that will be replaced by the value of
+    the `--base-href` argument provided to `flutter build`.
+  -->
+  <base href="$FLUTTER_BASE_HREF">
+
+  <meta charset="UTF-8">
+  <meta content="IE=Edge" http-equiv="X-UA-Compatible">
+  <meta name="description" content="A new Flutter project.">
+
+  <!-- iOS meta tags & icons -->
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black">
+  <meta name="apple-mobile-web-app-title" content="InterPrep">
+  <link rel="apple-touch-icon" href="icons/Icon-192.png">
+
+  <!-- Favicon -->
+  <link rel="icon" type="image/png" href="favicon.png">
+
+  <title>InterPrep</title>
+  <link rel="manifest" href="manifest.json">
+
+  <!-- Material Icons Font for Web -->
+  <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
+
+  <script>
+    // The value below is injected by flutter build, do not touch.
+    const serviceWorkerVersion = null;
+  </script>
+
+  <!-- ============================================================ -->
+  <!-- VAPI WEB SDK LOADING - ES MODULE IMPORT -->
+  <!-- ============================================================ -->
+  <script>
+    // Pre-set flags before SDK loads
+    window.vapiSdkReady = false;
+    window.vapiSdkError = null;
+    window.Vapi = undefined;
+  </script>
+  <script type="module">
+    // Import VAPI Web SDK using ESM CDN — v2.5.2 (latest stable)
+    // @vapi-ai/web is an ES module, so we MUST use type="module"
+    try {
+      const VapiModule = await import('https://esm.sh/@vapi-ai/web@2.5.2');
+
+      // The default export is the Vapi class
+      window.Vapi = VapiModule.default;
+      window.vapiSdkReady = true;
+      console.log('✅ VAPI SDK v2.5.2 loaded via ES module import');
+      console.log('✅ window.Vapi:', typeof window.Vapi);
+    } catch (e) {
+      console.warn('⚠️ esm.sh failed, trying skypack...');
+      try {
+        const VapiModule2 = await import('https://cdn.skypack.dev/@vapi-ai/web@2.5.2');
+        window.Vapi = VapiModule2.default;
+        window.vapiSdkReady = true;
+        console.log('✅ VAPI SDK v2.5.2 loaded via Skypack');
+      } catch (e2) {
+        console.error('❌ All VAPI SDK sources failed:', e2);
+        window.vapiSdkError = 'All CDN sources failed: ' + e2.message;
+      }
+    }
+  </script>
+
+  <!-- This script adds the flutter initialization JS code -->
+  <script src="flutter.js" defer=""></script>
+  <style id="splash-screen-style">
+    html {
+      height: 100%
+    }
+
+    body {
+      margin: 0;
+      min-height: 100%;
+      background-color: #ffffff;
+      background-image: url("splash/img/light-background.png");
+      background-size: 100% 100%;
+    }
+
+    .center {
+      margin: 0;
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      -ms-transform: translate(-50%, -50%);
+      transform: translate(-50%, -50%);
+    }
+
+    .contain {
+      display: block;
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+    }
+
+    .stretch {
+      display: block;
+      width: 100%;
+      height: 100%;
+    }
+
+    .cover {
+      display: block;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .bottom {
+      position: absolute;
+      bottom: 0;
+      left: 50%;
+      -ms-transform: translate(-50%, 0);
+      transform: translate(-50%, 0);
+    }
+
+    .bottomLeft {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+    }
+
+    .bottomRight {
+      position: absolute;
+      bottom: 0;
+      right: 0;
+    }
+  </style>
+  <script id="splash-screen-script">
+    function removeSplashFromWeb() {
+      document.getElementById("splash")?.remove();
+      document.getElementById("splash-branding")?.remove();
+      document.body.style.background = "transparent";
+    }
+  </script>
+  <meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" name="viewport">
+</head>
+
+<body>
+  <script>
+    window.addEventListener('load', function (ev) {
+      // Download main.dart.js
+      _flutter.loader.loadEntrypoint({
+        serviceWorker: {
+          serviceWorkerVersion: serviceWorkerVersion,
+        },
+        onEntrypointLoaded: function (engineInitializer) {
+          engineInitializer.initializeEngine().then(function (appRunner) {
+            appRunner.runApp();
+          });
+        }
+      });
+    });
+  </script>
+
+  <!-- ============================================================ -->
+  <!-- VAPI JAVASCRIPT BRIDGE FOR FLUTTER -->
+  <!-- Production-ready with defensive checks -->
+  <!-- ============================================================ -->
+  <script>
+    // Global VAPI instance
+    let vapiInstance = null;
+    let currentCallId = null;
+
+    // ============================================================
+    // HELPER: Check if VAPI SDK is loaded
+    // ============================================================
+    function isVapiSdkLoaded() {
+      return typeof window.Vapi !== 'undefined';
+    }
+
+    // ============================================================
+    // HELPER: Wait for VAPI SDK with timeout
+    // ============================================================
+    function waitForVapiSdk(timeoutMs = 10000) {
+      return new Promise((resolve, reject) => {
+        const startTime = Date.now();
+        const checkInterval = 100;
+
+        function check() {
+          if (isVapiSdkLoaded()) {
+            console.log('✅ VAPI SDK is ready (window.Vapi found)');
+            resolve(true);
+          } else if (Date.now() - startTime > timeoutMs) {
+            console.error('❌ VAPI SDK load timeout after ' + timeoutMs + 'ms');
+            console.error('❌ window.vapiSdkError:', window.vapiSdkError);
+            reject(new Error('VAPI SDK load timeout'));
+          } else {
+            console.log('⏳ Waiting for VAPI SDK... elapsed: ' + (Date.now() - startTime) + 'ms');
+            setTimeout(check, checkInterval);
+          }
+        }
+
+        check();
+      });
+    }
+
+    // ============================================================
+    // MAIN: Initialize VAPI with public key
+    // Called from Flutter via dart:js
+    // ============================================================
+    window.initVapi = async function (publicKey) {
+      console.log('🎙️ initVapi called with publicKey:', publicKey ? publicKey.substring(0, 8) + '...' : 'null');
+
+      // Validate input
+      if (!publicKey || publicKey.length < 10) {
+        console.error('❌ Invalid public key provided');
+        return false;
+      }
+
+      try {
+        // Wait for SDK to be available
+        if (!isVapiSdkLoaded()) {
+          console.log('⏳ VAPI SDK not ready, waiting...');
+          await waitForVapiSdk(15000); // Wait up to 15 seconds
+        }
+
+        // Double-check after waiting
+        if (!isVapiSdkLoaded()) {
+          console.error('❌ VAPI SDK still not available after waiting');
+          return false;
+        }
+
+        // Destroy any previous instance to avoid stale event listeners
+        if (vapiInstance) {
+          try { vapiInstance.stop(); } catch(_) {}
+          vapiInstance = null;
+        }
+
+        // Create fresh VAPI instance
+        console.log('🔧 Creating Vapi instance with public key...');
+        vapiInstance = new window.Vapi(publicKey);
+        currentCallId = null;
+        window._vapiCallActive = false;
+        console.log('✅ VAPI instance created successfully');
+
+        // Set up event listeners
+        vapiInstance.on('call-start', () => {
+          console.log('📞 Call started event received');
+          window._vapiCallActive = true;
+          // Drive Unity avatar bridge
+          window.unityAvatarBridge.init();
+          if (window.onVapiCallStart) window.onVapiCallStart();
+        });
+
+        vapiInstance.on('call-end', () => {
+          console.log('📞 Call ended event received');
+          // Mark inactive FIRST so error events that follow are ignored
+          window._vapiCallActive = false;
+          // Stop NVC recording (safety net)
+          if (window.stopNVCRecording) window.stopNVCRecording();
+          // Stop Unity avatar bridge
+          window.unityAvatarBridge.stop();
+          if (window.onVapiCallEnd) window.onVapiCallEnd(currentCallId);
+        });
+
+        vapiInstance.on('speech-start', () => {
+          // Only process if call is actually active
+          if (!window._vapiCallActive) return;
+          console.log('🎤 AI speaking');
+          window.unityAvatarBridge.setSpeaking(true);
+          if (window.onVapiSpeechStart) window.onVapiSpeechStart();
+        });
+
+        vapiInstance.on('speech-end', () => {
+          if (!window._vapiCallActive) return;
+          console.log('🔇 AI stopped speaking');
+          window.unityAvatarBridge.setSpeaking(false);
+          if (window.onVapiSpeechEnd) window.onVapiSpeechEnd();
+        });
+
+        vapiInstance.on('message', (message) => {
+          if (!window._vapiCallActive) return;
+          if (message.type === 'transcript') {
+            console.log('💬 Transcript:', message.role, message.transcript?.substring(0, 50));
+            if (window.onVapiTranscript) {
+              window.onVapiTranscript(message.role, message.transcript);
+            }
+          }
+        });
+
+        vapiInstance.on('error', (error) => {
+          console.error('❌ VAPI Error event:', JSON.stringify(error));
+          
+          // Filter out "ejected" / "Meeting has ended" — this is normal call teardown, NOT a real error
+          var errorStr = JSON.stringify(error || '');
+          if (errorStr.indexOf('ejected') !== -1 || errorStr.indexOf('Meeting has ended') !== -1) {
+            console.log('ℹ️ Call teardown event (normal, ignoring):', errorStr);
+            window._vapiCallActive = false;
+            return;
+          }
+          
+          // Only forward REAL errors to Flutter if call was actually active
+          if (window._vapiCallActive) {
+            if (window.onVapiError) window.onVapiError(error?.message || error?.toString() || 'Unknown error');
+          } else {
+            console.warn('⚠️ VAPI error ignored (call not active):', error);
+          }
+        });
+
+        return true;
+
+      } catch (e) {
+        console.error('❌ Failed to initialize VAPI:', e);
+        console.error('❌ Error details:', e.message);
+        return false;
+      }
+    };
+
+    // ============================================================
+    // Start a call with assistant ID
+    // ============================================================
+    window.startVapiCall = async function (assistantId) {
+      if (!vapiInstance) {
+        console.error('❌ VAPI not initialized - call initVapi first');
+        return null;
+      }
+
+      if (!assistantId) {
+        console.error('❌ No assistant ID provided');
+        return null;
+      }
+
+      try {
+        console.log('🎙️ Starting call with assistant:', assistantId);
+
+        // Pre-check microphone permission (release stream immediately so VAPI SDK can claim it)
+        try {
+          const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+          // IMPORTANT: Stop ALL tracks immediately — keeping them open blocks VAPI's
+          // Daily.co WebRTC from acquiring the microphone, causing
+          // "error-assistant-did-not-receive-customer-audio"
+          stream.getTracks().forEach(track => track.stop());
+          console.log('🎤 Microphone permission verified (stream released for VAPI)');
+        } catch (micErr) {
+          console.error('❌ Microphone permission denied:', micErr);
+          return null;
+        }
+
+        // Start VAPI call
+        const call = await vapiInstance.start(assistantId);
+        currentCallId = call?.id || 'call_' + Date.now();
+        window._vapiCallActive = true;
+        console.log('✅ Call started:', currentCallId);
+        return currentCallId;
+      } catch (e) {
+        console.error('❌ Failed to start call:', e);
+        console.error('❌ Call error details:', e.message, e.stack);
+        window._vapiCallActive = false;
+        return null;
+      }
+    };
+
+    // ============================================================
+    // Stop the current call — fail-safe
+    // ============================================================
+    window.stopVapiCall = function () {
+      console.log('🛑 stopVapiCall called, instance:', !!vapiInstance, 'active:', window._vapiCallActive);
+
+      try {
+        if (vapiInstance) {
+          vapiInstance.stop();
+          console.log('✅ vapiInstance.stop() called');
+        }
+      } catch (e) {
+        console.warn('⚠️ Error calling vapiInstance.stop():', e.message);
+      }
+
+      // Always mark as inactive regardless of errors
+      window._vapiCallActive = false;
+      console.log('✅ Call marked as stopped');
+      return true;
+    };
+
+    // ============================================================
+    // Check if VAPI is active
+    // ============================================================
+    window.isVapiActive = function () {
+      return vapiInstance !== null;
+    };
+
+    // ============================================================
+    // Check if VAPI SDK is loaded (for Flutter to check)
+    // ============================================================
+    window.isVapiSdkReady = function () {
+      return isVapiSdkLoaded();
+    };
+
+    // ============================================================
+    // Mute/unmute microphone
+    // ============================================================
+    window.setVapiMuted = function (muted) {
+      if (vapiInstance) {
+        vapiInstance.setMuted(muted);
+        return true;
+      }
+      return false;
+    };
+
+    // Log initial state
+    console.log('📦 VAPI Bridge initialized');
+    console.log('📦 window.Vapi available:', isVapiSdkLoaded());
+    console.log('📦 window.vapiSdkReady:', window.vapiSdkReady);
+  </script>
+
+  <!-- ============================================================ -->
+  <!-- UNITY AVATAR AUDIO BRIDGE                                     -->
+  <!-- Uses VAPI speech events to drive lip sync simulation           -->
+  <!-- Shadow DOM-aware: searches through Flutter's shadow roots      -->
+  <!-- ============================================================ -->
+  <script>
+    // ============================================================
+    // HELPER: Find Unity iframe even inside Flutter's Shadow DOM
+    // Flutter Web renders HtmlElementView inside shadow roots,
+    // so document.getElementById() won't find it from parent page.
+    // ============================================================
+    var _cachedUnityIframe = null;
+
+    function findUnityIframe() {
+      // Return cached reference if still in DOM
+      if (_cachedUnityIframe && _cachedUnityIframe.contentWindow) {
+        return _cachedUnityIframe;
+      }
+      _cachedUnityIframe = null;
+
+      // 1. Try direct getElementById first (works if NOT in shadow DOM)
+      var el = document.getElementById('unity-avatar-iframe');
+      if (el) {
+        console.log('🎭 Found Unity iframe via getElementById');
+        _cachedUnityIframe = el;
+        return el;
+      }
+
+      // 2. Try querySelectorAll on document (catches some cases)
+      var iframes = document.querySelectorAll('iframe');
+      for (var i = 0; i < iframes.length; i++) {
+        if (iframes[i].id === 'unity-avatar-iframe' ||
+          (iframes[i].src && iframes[i].src.indexOf('avatar.html') !== -1)) {
+          console.log('🎭 Found Unity iframe via document querySelectorAll');
+          _cachedUnityIframe = iframes[i];
+          return iframes[i];
+        }
+      }
+
+      // 3. Search through Shadow DOMs (Flutter Web puts platform views here)
+      function searchInShadowRoots(root) {
+        var shadowIframes = root.querySelectorAll('iframe');
+        for (var j = 0; j < shadowIframes.length; j++) {
+          if (shadowIframes[j].id === 'unity-avatar-iframe' ||
+            (shadowIframes[j].src && shadowIframes[j].src.indexOf('avatar.html') !== -1)) {
+            return shadowIframes[j];
+          }
+        }
+        // Recurse into child shadow roots
+        var allElements = root.querySelectorAll('*');
+        for (var k = 0; k < allElements.length; k++) {
+          if (allElements[k].shadowRoot) {
+            var found = searchInShadowRoots(allElements[k].shadowRoot);
+            if (found) return found;
+          }
+        }
+        return null;
+      }
+
+      var fromShadow = searchInShadowRoots(document);
+      if (fromShadow) {
+        console.log('🎭 Found Unity iframe inside Shadow DOM');
+        _cachedUnityIframe = fromShadow;
+        return fromShadow;
+      }
+
+      // 4. Last resort: check flt-glass-pane (Flutter's rendering host)
+      var glassPane = document.querySelector('flt-glass-pane');
+      if (glassPane && glassPane.shadowRoot) {
+        var gpResult = searchInShadowRoots(glassPane.shadowRoot);
+        if (gpResult) {
+          console.log('🎭 Found Unity iframe inside flt-glass-pane shadow');
+          _cachedUnityIframe = gpResult;
+          return gpResult;
+        }
+      }
+
+      return null;
+    }
+
+    // ============================================================
+    // Unity Avatar Audio Bridge — speech-event driven
+    // ============================================================
+    window.unityAvatarBridge = {
+      isActive: false,
+      isSpeaking: false,
+      animFrameId: null,
+      currentVolume: 0,
+      targetVolume: 0,
+      phase: 0,
+      // Syllable timing — creates natural open/close mouth pattern
+      syllableTimer: 0,
+      syllableDuration: 0,
+      syllableGap: 0,
+      inSyllable: true,
+      // Word pause — random pauses between words
+      wordPauseTimer: 0,
+      wordPauseDuration: 0,
+      inWordPause: false,
+
+      _debugLogCounter: 0,
+      _iframeFoundLogged: false,
+
+      // Initialize (call when VAPI call starts)
+      init: function () {
+        console.log('🎭 Unity Avatar Bridge: Initializing...');
+        this.isActive = true;
+        this._debugLogCounter = 0;
+        this._iframeFoundLogged = false;
+        this.syllableTimer = 0;
+        this.syllableDuration = 0;
+        this.wordPauseTimer = 0;
+        this.inWordPause = false;
+        this.inSyllable = true;
+        // Clear cached iframe ref so we re-find it
+        _cachedUnityIframe = null;
+        // Try finding iframe immediately
+        var iframe = findUnityIframe();
+        console.log('🎭 Bridge init: iframe found =', !!iframe, iframe ? iframe.src : 'N/A');
+        this.sendLoop();
+      },
+
+      // Generate next syllable timing
+      _nextSyllable: function () {
+        this.syllableTimer = 0;
+        if (this.inSyllable) {
+          // Was in syllable → go to gap (mouth closing)
+          this.inSyllable = false;
+          this.syllableGap = 0.04 + Math.random() * 0.08; // 40-120ms gap
+        } else {
+          // Was in gap → go to syllable (mouth opening)
+          this.inSyllable = true;
+          this.syllableDuration = 0.06 + Math.random() * 0.12; // 60-180ms syllable
+        }
+      },
+
+      // Main animation loop: send simulated audio data to Unity
+      // Volume range tuned for Unity's volumeSensitivity=15:
+      //   vol 0.00 → mouth 0%
+      //   vol 0.02 → mouth ~30%
+      //   vol 0.04 → mouth ~60%
+      //   vol 0.06 → mouth ~90%
+      //   vol 0.067+ → mouth 100% (avoid this for natural look)
+      sendLoop: function () {
+        var self = this;
+        if (!this.isActive) return;
+
+        var dt = 1.0 / 60.0; // approximate frame time
+
+        if (this.isSpeaking) {
+          this.phase += dt;
+
+          // Word pause logic: ~15% chance to pause between words
+          if (!this.inWordPause) {
+            this.wordPauseTimer += dt;
+            // Every 0.4-1.2s of speech, maybe take a word pause
+            if (this.wordPauseTimer > (0.4 + Math.random() * 0.8)) {
+              if (Math.random() < 0.25) {
+                this.inWordPause = true;
+                this.wordPauseDuration = 0.1 + Math.random() * 0.2; // 100-300ms pause
+                this.wordPauseTimer = 0;
+              } else {
+                this.wordPauseTimer = 0;
+              }
+            }
+          } else {
+            this.wordPauseTimer += dt;
+            if (this.wordPauseTimer >= this.wordPauseDuration) {
+              this.inWordPause = false;
+              this.wordPauseTimer = 0;
+            }
+          }
+
+          // In word pause → mouth closes
+          if (this.inWordPause) {
+            this.targetVolume = 0.003 + Math.random() * 0.005; // nearly closed
+          } else {
+            // Syllable timing: rapid open/close
+            this.syllableTimer += dt;
+            var syllableLimit = this.inSyllable ? (this.syllableDuration || 0.1) : (this.syllableGap || 0.06);
+            if (this.syllableTimer >= syllableLimit) {
+              this._nextSyllable();
+            }
+
+            if (this.inSyllable) {
+              // Mouth open — varying amounts for natural look
+              var baseVol = 0.025 + Math.random() * 0.03; // 0.025-0.055
+              // Add subtle variation with sine waves
+              baseVol += Math.sin(this.phase * 8.0) * 0.008;
+              baseVol += Math.sin(this.phase * 13.0) * 0.005;
+              this.targetVolume = Math.min(0.06, Math.max(0.01, baseVol));
+            } else {
+              // Syllable gap — mouth partially closes
+              this.targetVolume = 0.005 + Math.random() * 0.01; // small value
+            }
+          }
+        } else {
+          this.targetVolume = 0;
+          this.phase = 0;
+          this.syllableTimer = 0;
+          this.inWordPause = false;
+        }
+
+        // Smooth transition — faster opening, slower closing
+        var speed = this.targetVolume > this.currentVolume ? 0.35 : 0.2;
+        this.currentVolume += (this.targetVolume - this.currentVolume) * speed;
+
+        // Clamp very small values to 0
+        if (this.currentVolume < 0.002) this.currentVolume = 0;
+
+        var vol = this.currentVolume;
+
+        // Send to Unity iframe (Shadow DOM-aware lookup)
+        var unityIframe = findUnityIframe();
+        if (unityIframe && unityIframe.contentWindow) {
+          if (!this._iframeFoundLogged) {
+            console.log('🎭 Bridge: Unity iframe FOUND! Sending messages now. src=', unityIframe.src);
+            this._iframeFoundLogged = true;
+          }
+          unityIframe.contentWindow.postMessage({
+            type: 'audio-level',
+            volume: vol,
+            hf: vol * (0.4 + Math.random() * 0.3),
+            lf: vol * (0.3 + Math.random() * 0.2),
+            mf: vol * (0.3 + Math.random() * 0.2),
+            isSpeaking: this.isSpeaking
+          }, '*');
+        } else {
+          this._debugLogCounter++;
+          // Log every 120 frames (~2 seconds) to avoid console spam
+          if (this._debugLogCounter % 120 === 1) {
+            console.warn('🎭 Bridge: Unity iframe NOT FOUND! (attempt #' + this._debugLogCounter + ')');
+            // Also log all iframes in the page for debugging
+            var allIframes = document.querySelectorAll('iframe');
+            console.log('🎭 Total iframes in document:', allIframes.length);
+            allIframes.forEach(function(f, i) { console.log('  iframe[' + i + ']:', f.id, f.src); });
+          }
+        }
+
+        this.animFrameId = requestAnimationFrame(function () { self.sendLoop(); });
+      },
+
+      // Set speaking state
+      setSpeaking: function (speaking) {
+        this.isSpeaking = speaking;
+        console.log('🎭 Avatar speaking:', speaking);
+
+        var unityIframe = findUnityIframe();
+        if (unityIframe && unityIframe.contentWindow) {
+          unityIframe.contentWindow.postMessage({
+            type: 'set-state',
+            state: speaking ? 'speaking' : 'listening'
+          }, '*');
+        } else {
+          console.warn('🎭 Unity iframe not found! Lip sync data cannot be sent.');
+        }
+      },
+
+      // Stop
+      stop: function () {
+        this.isActive = false;
+        this.isSpeaking = false;
+        this.currentVolume = 0;
+        if (this.animFrameId) cancelAnimationFrame(this.animFrameId);
+
+        var unityIframe = findUnityIframe();
+        if (unityIframe && unityIframe.contentWindow) {
+          unityIframe.contentWindow.postMessage({
+            type: 'set-state', state: 'idle'
+          }, '*');
+        }
+        console.log('🎭 Unity Avatar Bridge: Stopped');
+      }
+    };
+
+    // Bridge events are hooked directly in initVapi() on the VAPI instance
+    // This avoids the race condition where Flutter's vapi_web.dart would
+    // overwrite the window.onVapiSpeechStart/End callbacks
+    console.log('🎭 Unity Avatar Bridge: Ready (Shadow DOM-aware, VAPI instance events)');
+  </script>
+  <!-- ============================================================ -->
+  <!-- NVC RECORDER - Webcam frame capture for body language analysis -->
+  <!-- ============================================================ -->
+  <script src="nvc_recorder.js"></script>
+
+
+</body>
+
+</html>

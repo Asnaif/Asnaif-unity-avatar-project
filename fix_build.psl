@@ -1,0 +1,106 @@
+# Stop Gradle
+cd android
+.\gradlew --stop
+cd ..
+
+# Deep clean
+flutter clean
+Remove-Item -Path ".dart_tool" -Recurse -Force -ErrorAction SilentlyContinue
+Remove-Item -Path "android\.gradle" -Recurse -Force -ErrorAction SilentlyContinue
+Remove-Item -Path "android\app\build" -Recurse -Force -ErrorAction SilentlyContinue
+Remove-Item -Path "android\build" -Recurse -Force -ErrorAction SilentlyContinue
+Remove-Item -Path "build" -Recurse -Force -ErrorAction SilentlyContinue
+Remove-Item -Path ".flutter-plugins" -Force -ErrorAction SilentlyContinue
+Remove-Item -Path ".flutter-plugins-dependencies" -Force -ErrorAction SilentlyContinue
+
+# Delete the corrupted file
+Remove-Item -Path "android\app\src\main\java\io\flutter" -Recurse -Force -ErrorAction SilentlyContinue
+
+# Get dependencies
+flutter pub get
+
+# Manually create the correct GeneratedPluginRegistrant.java
+$dir = "android\app\src\main\java\io\flutter\plugins"
+New-Item -Path $dir -ItemType Directory -Force | Out-Null
+
+$content = @"
+package io.flutter.plugins;
+
+import androidx.annotation.Keep;
+import androidx.annotation.NonNull;
+import io.flutter.Log;
+import io.flutter.embedding.engine.FlutterEngine;
+
+@Keep
+public final class GeneratedPluginRegistrant {
+  private static final String TAG = "GeneratedPluginRegistrant";
+  
+  public static void registerWith(@NonNull FlutterEngine flutterEngine) {
+    try {
+      flutterEngine.getPlugins().add(new xyz.luan.audioplayers.AudioplayersPlugin());
+    } catch (Exception e) {
+      Log.e(TAG, "Error registering plugin audioplayers_android", e);
+    }
+    try {
+      flutterEngine.getPlugins().add(new io.flutter.plugins.firebase.firestore.FlutterFirebaseFirestorePlugin());
+    } catch (Exception e) {
+      Log.e(TAG, "Error registering plugin cloud_firestore", e);
+    }
+    try {
+      flutterEngine.getPlugins().add(new com.mr.flutter.plugin.filepicker.FilePickerPlugin());
+    } catch (Exception e) {
+      Log.e(TAG, "Error registering plugin file_picker", e);
+    }
+    try {
+      flutterEngine.getPlugins().add(new io.flutter.plugins.firebase.auth.FlutterFirebaseAuthPlugin());
+    } catch (Exception e) {
+      Log.e(TAG, "Error registering plugin firebase_auth", e);
+    }
+    try {
+      flutterEngine.getPlugins().add(new io.flutter.plugins.firebase.core.FlutterFirebaseCorePlugin());
+    } catch (Exception e) {
+      Log.e(TAG, "Error registering plugin firebase_core", e);
+    }
+    try {
+      flutterEngine.getPlugins().add(new io.flutter.plugins.firebase.storage.FlutterFirebaseStoragePlugin());
+    } catch (Exception e) {
+      Log.e(TAG, "Error registering plugin firebase_storage", e);
+    }
+    try {
+      flutterEngine.getPlugins().add(new net.jonhanson.flutter_native_splash.FlutterNativeSplashPlugin());
+    } catch (Exception e) {
+      Log.e(TAG, "Error registering plugin flutter_native_splash", e);
+    }
+    try {
+      flutterEngine.getPlugins().add(new io.flutter.plugins.flutter_plugin_android_lifecycle.FlutterAndroidLifecyclePlugin());
+    } catch (Exception e) {
+      Log.e(TAG, "Error registering plugin flutter_plugin_android_lifecycle", e);
+    }
+    try {
+      flutterEngine.getPlugins().add(new io.flutter.plugins.pathprovider.PathProviderPlugin());
+    } catch (Exception e) {
+      Log.e(TAG, "Error registering plugin path_provider_android", e);
+    }
+    try {
+      flutterEngine.getPlugins().add(new com.llfbandit.record.RecordPlugin());
+    } catch (Exception e) {
+      Log.e(TAG, "Error registering plugin record_android", e);
+    }
+    try {
+      flutterEngine.getPlugins().add(new dev.fluttercommunity.plus.share.SharePlusPlugin());
+    } catch (Exception e) {
+      Log.e(TAG, "Error registering plugin share_plus", e);
+    }
+    try {
+      flutterEngine.getPlugins().add(new io.flutter.plugins.urllauncher.UrlLauncherPlugin());
+    } catch (Exception e) {
+      Log.e(TAG, "Error registering plugin url_launcher_android", e);
+    }
+  }
+}
+"@
+
+Set-Content -Path "$dir\GeneratedPluginRegistrant.java" -Value $content -Encoding UTF8
+
+Write-Host "Fixed GeneratedPluginRegistrant.java"
+Write-Host "Now run: flutter build apk --release"

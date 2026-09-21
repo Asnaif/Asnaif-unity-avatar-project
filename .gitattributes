@@ -1,0 +1,18 @@
+# Keep all text files consistent (Linux style)
+* text=auto eol=lf
+
+# Flutter / Dart
+*.dart text eol=lf
+
+# Python
+*.py text eol=lf
+
+# Web
+*.html text eol=lf
+*.js text eol=lf
+*.css text eol=lf
+
+# Config files
+*.yaml text eol=lf
+*.yml text eol=lf
+*.json text eol=lf
